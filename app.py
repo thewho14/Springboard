@@ -10,6 +10,11 @@ rfc = joblib.load('model.pkl')
 
 app = dash.Dash()
 
+
+#app.css.append_css({
+#    "external_url": "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+#})
+
 app.layout = html.Div(children=[
     html.H1(children='Affordability Predictor'),
 
@@ -36,7 +41,8 @@ app.layout = html.Div(children=[
                     {'label':'Minneapolis-Saint Paul', 'value':5120},
                     {'label':'Seattle', 'value':7600}
                     ],
-                    value = 5600),
+                    placeholder = 'Please Select a City',
+                    ),
      html.Br(),
      html.Label('Does the unit have a working fireplace?'),
      dcc.RadioItems(id = 'Fire',
@@ -77,11 +83,12 @@ app.layout = html.Div(children=[
                             ],
              value = 1),
      html.Br(),
-     html.Label('Is a driveway/lot/parking area off the street provided?'),
+     html.Label('If there is no garage, is a driveway/lot/parking area off the street provided?'),
      dcc.RadioItems(id = 'Park',
                     options=[
                             {'label':'Yes','value':1},
-                            {'label':'No','value':2}
+                            {'label':'No','value':2},
+                            {'label':'Unit has a Garage','value':-6}
                             ],
              value = 1),
      html.Br(),
