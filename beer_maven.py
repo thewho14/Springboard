@@ -132,7 +132,7 @@ app.layout = html.Div(children=[
         html.Label('Search for Brewery and/or Beer'),
         dcc.Input(id = 'search', value=''),
         html.Button(id = 'search button',n_clicks = 0, children = 'Search'),
-        html.H2(id='out2')
+        dcc.Dropdown(id='out2')
         ])
 @app.callback(
     Output(component_id='out1', component_property='children'),
@@ -166,7 +166,7 @@ def add_pref(n,IPA, DA, PS, PL, DL, WB, HA, SF, NA):
     return data.to_json()
 
 @app.callback(
-        Output(component_id='out2', component_property='children'),
+        Output(component_id='out2', component_property='options'),
         [Input(component_id='search button', component_property='n_clicks')],
         [State(component_id='search', component_property= 'value')]
         )
@@ -174,7 +174,7 @@ def add_pref(n,IPA, DA, PS, PL, DL, WB, HA, SF, NA):
 def search_df(n, entry):
     try:
         qp = MultifieldParser(["brewery","beer"], schema=ix.schema)
-        q = qp.parse(unicode(entry))
+        q = qp.parse(entry)
         #q = qp.parse('ballast point sculpin IPA')
         with ix.searcher() as s:
             results = s.search(q)
@@ -188,12 +188,36 @@ def search_df(n, entry):
             h = results[2]['brewery']
             i = results[2]['beer_id']
             
-            #for line in
-            return 'Result 1: Beer: {} Brewery: {}  ID: {}'.format(a,b,c) + 'Result 2: Beer: {}  Brewery: {} ID: {}'.format(d,e,f) + 'Result 3: Beer: {} Brewery: {} ID: {}'.format(g,h,i)
-            #return 
+            liner = []
+            ids = []
+            for x in range(10):
+                a = results[x]['beer']
+                b = results[x]['brewery']
+                c = results[x]['beer_id']
+                new_line = str(a + ', ' + b)
+                ids.append(c)
+                liner.append(new_line)
+            lines = [{'label':liner[x],'value':ids[x]} for x in range(len(ids))]
+            
+            '''lines = [{'label':liner[0],'value':ids[0]},
+                     {'label':liner[1],'value':ids[1]},
+                     {'label':liner[2],'value':ids[2]},
+                     {'label':liner[3],'value':ids[3]},
+                     {'label':liner[4],'value':ids[4]},
+                     {'label':liner[5],'value}]'''
+            
+            '''line1 = str(a + ' ' + b)
+            line2 = str(d + ' ' + e)
+            line3 = str(g + ' ' + h)
+            lines = [{'label':line1, 'value':c},
+                     {'label':line2, 'value':d},
+                     {'label':line3, 'value':e}]'''
+            #return 'Result 1: Beer: {} Brewery: {}  ID: {}'.format(a,b,c) + 'Result 2: Beer: {}  Brewery: {} ID: {}'.format(d,e,f) + 'Result 3: Beer: {} Brewery: {} ID: {}'.format(g,h,i)
+            return lines
+            #return line1
         #find way to make output results dropdown or radio buttons
-    except:
-        return '{}'.format(type(unicode(entry)))
+    except Exception as inst:
+        return '{}'.format(inst)
         #return '{}, {}'.format(results[0]['brewery'],results[0]['beer'])
 
 if __name__ == '__main__':
