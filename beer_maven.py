@@ -130,9 +130,10 @@ app.layout = html.Div(children=[
         html.Br(),
         html.Br(),
         html.Label('Search for Brewery and/or Beer'),
-        dcc.Input(id = 'search', value=''),
+        dcc.Input(id = 'search'),
         html.Button(id = 'search button',n_clicks = 0, children = 'Search'),
-        dcc.Dropdown(id='out2')
+        dcc.Dropdown(id = 'out2')#, options=[{'label':'beer1'},{'label':'beer2'}])
+        #html.H2(id='out2',children='words')
         ])
 @app.callback(
     Output(component_id='out1', component_property='children'),
@@ -146,6 +147,7 @@ app.layout = html.Div(children=[
      State(component_id='HA', component_property='value'),
      State(component_id='SF', component_property='value'),
      State(component_id='NA', component_property='value')]
+
 )
 def add_pref(n,IPA, DA, PS, PL, DL, WB, HA, SF, NA):
     #return '{} You\'ve entered "{}"'.format(n,[IPA,DA,PS,PL,DL,WB,HA,SF])
@@ -166,59 +168,35 @@ def add_pref(n,IPA, DA, PS, PL, DL, WB, HA, SF, NA):
     return data.to_json()
 
 @app.callback(
-        Output(component_id='out2', component_property='options'),
-        [Input(component_id='search button', component_property='n_clicks')],
-        [State(component_id='search', component_property= 'value')]
-        )
+        Output('out2', 'options'),
+        [Input('search', 'value')])
 
-def search_df(n, entry):
+def sample(entry):
     try:
         qp = MultifieldParser(["brewery","beer"], schema=ix.schema)
         q = qp.parse(entry)
-        #q = qp.parse('ballast point sculpin IPA')
+        #q = qp.parse(u'sculpin')
         with ix.searcher() as s:
-            results = s.search(q)
-            a = results[0]['beer']
-            b = results[0]['brewery']
-            c = results[0]['beer_id']
-            d = results[1]['beer']
-            e = results[1]['brewery']
-            f = results[1]['beer_id']
-            g = results[2]['beer']
-            h = results[2]['brewery']
-            i = results[2]['beer_id']
-            
-            liner = []
-            ids = []
-            for x in range(10):
-                a = results[x]['beer']
-                b = results[x]['brewery']
-                c = results[x]['beer_id']
-                new_line = str(a + ', ' + b)
-                ids.append(c)
-                liner.append(new_line)
-            lines = [{'label':liner[x],'value':ids[x]} for x in range(len(ids))]
-            
-            '''lines = [{'label':liner[0],'value':ids[0]},
-                     {'label':liner[1],'value':ids[1]},
-                     {'label':liner[2],'value':ids[2]},
-                     {'label':liner[3],'value':ids[3]},
-                     {'label':liner[4],'value':ids[4]},
-                     {'label':liner[5],'value}]'''
-            
-            '''line1 = str(a + ' ' + b)
-            line2 = str(d + ' ' + e)
-            line3 = str(g + ' ' + h)
-            lines = [{'label':line1, 'value':c},
-                     {'label':line2, 'value':d},
-                     {'label':line3, 'value':e}]'''
-            #return 'Result 1: Beer: {} Brewery: {}  ID: {}'.format(a,b,c) + 'Result 2: Beer: {}  Brewery: {} ID: {}'.format(d,e,f) + 'Result 3: Beer: {} Brewery: {} ID: {}'.format(g,h,i)
-            return lines
-            #return line1
-        #find way to make output results dropdown or radio buttons
-    except Exception as inst:
-        return '{}'.format(inst)
-        #return '{}, {}'.format(results[0]['brewery'],results[0]['beer'])
+                results = s.search(q)
+                results = [results[r] for r in range(len(results)) if len(results[r])==3]
+                liner = []
+                ids = []
+                for x in range(len(results)):
+                    be = results[x]['beer']
+                    br = results[x]['brewery']
+                    bi = results[x]['beer_id']
+                    new_line = str(be + ', ' + br)
+                    ids.append(bi)
+                    liner.append(new_line)
+                
+                lines = []
+                for d in range(len(results)):
+                    ent = {'label':liner[d],'value':ids[d]}
+                    lines.append(ent)
+                #return '{}'.format(lines)
+                return lines
+    except Exception as rep:
+        return '{}'.format(rep)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
