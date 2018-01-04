@@ -131,9 +131,15 @@ app.layout = html.Div(children=[
         html.Br(),
         html.Label('Search for Brewery and/or Beer'),
         dcc.Input(id = 'search'),
-        html.Button(id = 'search button',n_clicks = 0, children = 'Search'),
-        dcc.Dropdown(id = 'out2')#, options=[{'label':'beer1'},{'label':'beer2'}])
+        dcc.Dropdown(id = 'out2'),#, options=[{'label':'beer1'},{'label':'beer2'}])
+        html.Button(id='adder',n_clicks=0, children = 'Add'),
+        #html.Button(id = 'search button',n_clicks = 0, children = 'Search')
         #html.H2(id='out2',children='words')
+        html.Div(id='beer list',style={'display':'none'},children=[]),
+        html.Div(id='count',style={'display':'none'}),
+        html.Button(id='show',n_clicks=0, children = 'show'),
+        html.Button(id='reset',n_clicks=0, children = 'reset'),
+        html.H2(id='disp')
         ])
 @app.callback(
     Output(component_id='out1', component_property='children'),
@@ -178,7 +184,7 @@ def sample(entry):
         #q = qp.parse(u'sculpin')
         with ix.searcher() as s:
                 results = s.search(q)
-                results = [results[r] for r in range(len(results)) if len(results[r])==3]
+                results = [results[r] for r in range(len(results)) if len(results[r])>=3]
                 liner = []
                 ids = []
                 for x in range(len(results)):
@@ -197,6 +203,37 @@ def sample(entry):
                 return lines
     except Exception as rep:
         return '{}'.format(rep)
+
+
+
+@app.callback(
+        Output('beer list','children'),
+        [Input('adder', 'n_clicks'), Input('reset','n_clicks')],
+        [State('beer list', 'children'), State('out2','value'), State('count','children')])
+
+def add_list(n, m, west, side, k):
+    try:        
+        if m > k:
+            return []
+            
+        else:
+            west.append(side)
+            return west
+    except Exception as inst:
+        return '{}'.format(inst)
+    
+@app.callback(
+        Output('disp','children'),
+        [Input('show','n_clicks')],
+        [State('beer list','children')])
+
+def show(n, liste):
+    return '{}'.format(liste[1::])
+
+@app.callback(Output('count','children'), [Input('reset','n_clicks')])
+
+def counter(n):
+    return n
 
 if __name__ == '__main__':
     app.run_server(debug=True)
