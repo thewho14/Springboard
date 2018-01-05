@@ -67,9 +67,21 @@ from whoosh.analysis import StemmingAnalyzer
                 beer=TEXT(stored=True),
                 group=KEYWORD)'''
 
+from surprise import KNNBaseline as KNNB
+from surprise import SVD
+import surprise
+from surprise import Dataset
+from surprise import evaluate
+from surprise import Reader
+from surprise import GridSearch
+
+
 ix = open_dir("index")
 
 app = dash.Dash()
+
+algo = SVD(n_epochs=10, lr_all=.005, reg_all=.3)
+reader = Reader(rating_scale=(1, 5))
 
 #app.css.append_css({"external_url": "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"})
 app.css.append_css({'external_url':'https://codepen.io/chriddyp/pen/bWLwgP.css'})
@@ -139,7 +151,10 @@ app.layout = html.Div(children=[
         html.Div(id='count',style={'display':'none'}),
         html.Button(id='show',n_clicks=0, children = 'show'),
         html.Button(id='reset',n_clicks=0, children = 'reset'),
-        html.H2(id='disp')
+        html.H2(id='disp'),
+        html.Br(),
+        html.Button(id='sort',n_clicks=0,children='sort'),
+        html.H2(id='final')
         ])
 @app.callback(
     Output(component_id='out1', component_property='children'),
@@ -171,6 +186,10 @@ def add_pref(n,IPA, DA, PS, PL, DL, WB, HA, SF, NA):
         if pref_vect[x] == 5:
             data.loc[data.group==grouped[x],'rating'] = score + .5
         data.loc[data.rating > 5,'rating'] = 5
+    jaja = Dataset.load_from_df(data[['username','beer_id','rating']], reader)
+    jaja.split()
+    trainset = jaja.build_full_trainset()
+    algo.train(trainset)
     return data.to_json()
 
 @app.callback(
@@ -234,6 +253,23 @@ def show(n, liste):
 
 def counter(n):
     return n
+
+@app.callback(Output('final','children'),
+              [Input('sort','n_clicks')],
+              [State('beer list','children'), State('out1','children')])
+
+def sort_beers(n, alist, df):
+    try:
+        dr = pd.read_json(df)
+        user = 'user'
+        ok = [[x,algo.predict(user, x)[3]] for x in alist]
+        okee = pd.DataFrame(ok,columns=['beer_id','rating'])
+        do = okee.groupby('beer_id').mean().sort_values('rating',ascending=False).index
+        p = sorted([[dr[dr.beer_id == x].rating.values[0], dr[dr.beer_id==x].beer.values[0]] for x in do])[-1::-1]
+        return '{}'.format(p)
+    except Exception as ex:
+        #return '{}'.format(ex)
+        return 'Please add beers to the list'
 
 if __name__ == '__main__':
     app.run_server(debug=True)
